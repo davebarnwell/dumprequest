@@ -7,9 +7,11 @@ class DumpRequestController extends Controller
 
     const FILE_EXTENSION = '.txt';
     const UPLOAD_EXTENSION = '.data';
+    const SECONDS_IN_DAY = 86400;
+
     private $requestBody;
 
-    public function execute(string $targetFile)
+    public function execute(string $targetFile, float $daysToKeep = 7)
     {
 
         $data = $this->getHeadersAsString();
@@ -23,6 +25,7 @@ class DumpRequestController extends Controller
         $this->saveToFile($targetFile, $data);
 
         echo("REQUEST RECEIVED" . PHP_EOL);
+        $this->removeFilesOlderThanXseconds(dirname($targetFile), self::SECONDS_IN_DAY * $daysToKeep);
     }
 
     private function saveToFile(string $filename, string $data)
@@ -92,7 +95,7 @@ class DumpRequestController extends Controller
                     $sanitisedFilename = preg_replace('/[^-_0-9a-zA-Z]+/', '', $fileField);
                     $uploadFilename = $filename . '-' . $sanitisedFilename . self::UPLOAD_EXTENSION;
                     if (move_uploaded_file($_FILES[$fileField]['tmp_name'], $uploadFilename)) {
-                        $data .= "- file saved as: " . basename($uploadFilename) . PHP_EOL;
+                        $data .= "- saved to: " . basename($uploadFilename) . PHP_EOL;
                     }
                 }
             }
@@ -139,4 +142,21 @@ class DumpRequestController extends Controller
         return $headerList;
     }
 
+    /**
+     * @param string $dir
+     * @param int $seconds default 7 days in seconds
+     */
+    private function removeFilesOlderThanXseconds(string $dir, $seconds = 604800)
+    {
+        $files = glob($dir . "/*");
+        $now = time();
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                if ($now - filemtime($file) >= $seconds) { // 2 days
+                    unlink($file);
+                }
+            }
+        }
+    }
 }

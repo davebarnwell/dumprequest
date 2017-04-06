@@ -32,7 +32,6 @@ Finally take a look in the cache directory at the *.txt files
 ## TODO very soon
 - On GET request show recent requests and allow exploring older ones saved in files rather
   than having to look at the files in the terminal
-- Automatically clean up files older than x days automatically
 
 ## Nice TODO future features
 - Live update the GET view as new POST/DELETE/PUT/OPTIONS requests come in

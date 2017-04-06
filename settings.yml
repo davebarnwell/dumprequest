@@ -1,2 +1,3 @@
 storeRequests: /cached_requests
+deleteOlderThanDays: 7
 webRoot: /public
