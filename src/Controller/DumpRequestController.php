@@ -5,6 +5,8 @@ namespace davebarnwell\Controller;
 class DumpRequestController extends Controller
 {
 
+    const FILE_EXTENSION = '.txt';
+    const UPLOAD_EXTENSION = '.data';
     private $requestBody;
 
     public function execute(string $targetFile)
@@ -14,7 +16,7 @@ class DumpRequestController extends Controller
 
         $data .= $this->getMethodParamsAsString();
 
-        $data .= $this->getUploadedFilesAsSummaryString();
+        $data .= $this->getUploadedFilesAsSummaryString($targetFile);
 
         $data .= $this->getRequestBodyAsString();
 
@@ -26,7 +28,7 @@ class DumpRequestController extends Controller
     private function saveToFile(string $filename, string $data)
     {
         return file_put_contents(
-            $filename,
+            $filename . self::FILE_EXTENSION,
             $data
         );
     }
@@ -76,7 +78,7 @@ class DumpRequestController extends Controller
         return $data;
     }
 
-    private function getUploadedFilesAsSummaryString()
+    private function getUploadedFilesAsSummaryString(string $filename)
     {
         $data = '';
         if ($_FILES) {
@@ -85,6 +87,13 @@ class DumpRequestController extends Controller
                 $data .= 'File Field Name: ' . $fileField . PHP_EOL;
                 foreach ($meta as $key => $value) {
                     $data .= "- $key: " . $value . PHP_EOL;
+                }
+                if (is_uploaded_file($_FILES[$fileField]['tmp_name'])) {
+                    $sanitisedFilename = preg_replace('/[^-_0-9a-zA-Z]+/', '', $fileField);
+                    $uploadFilename = $filename . '-' . $sanitisedFilename . self::UPLOAD_EXTENSION;
+                    if (move_uploaded_file($_FILES[$fileField]['tmp_name'], $uploadFilename)) {
+                        $data .= "- file saved as: " . basename($uploadFilename) . PHP_EOL;
+                    }
                 }
             }
         }
