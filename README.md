@@ -3,7 +3,16 @@
 Simple tool to dump HTTP requests to files, which can then be examined to see what data a HTTP
 client is sending. Files are stored in /cached_requests directory
 
-## Give it a quick go
+## Installation
+
+Copy the files to your web server note the web root should be set to the public folder with
+the rest of the files above the web root. You'll also need to install [composer](https://getcomposer.org/download/)
+I recommend installing it [globally](https://getcomposer.org/doc/00-intro.md#globally) so you dont have multiple copies
+hanging around your system unless you specifically need to.
+Once compose is installed in the projects root directory run ```composer install``` to pull in the projects
+dependancies which are basically Slim, Twig, Yaml and Monolog.
+
+## Give it a quick go locally with PHP's built in web server
 
 In a terminal window cd into the public directory and run the following to run up a basic
 web server on your machine on port 8080
