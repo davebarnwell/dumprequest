@@ -2,33 +2,68 @@
 
 namespace davebarnwell\Controller;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UploadedFileInterface;
+use Slim\Http\Request;
+use Slim\Http\Response;
+
 class DumpRequestController extends Controller
 {
 
-    const FILE_EXTENSION = '.txt';
+    const FILE_EXTENSION   = '.txt';
     const UPLOAD_EXTENSION = '.data';
-    const SECONDS_IN_DAY = 86400;
+    const SECONDS_IN_DAY   = 86400;
 
-    private $requestBody;
-
-    public function execute(string $targetFile, float $daysToKeep = 7)
+    /**
+     * Entry point to dump a HTTP request to files
+     *
+     * @param Request  $request
+     * @param Response $response
+     * @param array    $args
+     *
+     * @return ResponseInterface
+     */
+    public function execute(Request $request, Response $response, array $args): ResponseInterface
     {
 
-        $data = $this->getHeadersAsString();
+        $time    = time();
+        $dateStr = date('Y-m-d-H-i-s', $time);
+        $uuid    = uniqid();
 
-        $data .= $this->getMethodParamsAsString();
+        $targetFile = $this->container->get('settings_yml')->getDirectorySetting('storeRequests') . '/' . $dateStr . '-request-' . $uuid;
 
-        $data .= $this->getUploadedFilesAsSummaryString($targetFile);
+        $data = 'Received at: ' . date('r', $time) . PHP_EOL;
 
-        $data .= $this->getRequestBodyAsString();
+        $data .= $this->getHeadersAsString($request);
 
-        $this->saveToFile($targetFile, $data);
+        $data .= $this->getMethodParamsAsString($request);
 
-        echo("REQUEST RECEIVED" . PHP_EOL);
-        $this->removeFilesOlderThanXseconds(dirname($targetFile), self::SECONDS_IN_DAY * $daysToKeep);
+        $data .= $this->getUploadedFilesAsSummaryString($request, $targetFile);
+
+        $data .= $this->getRequestBodyAsString($request);
+
+        $this->saveStringToFile($targetFile, $data);
+
+        $this->removeFilesOlderThanXseconds(dirname($targetFile),
+            self::SECONDS_IN_DAY * $this->container->get('settings_yml')->getSetting('deleteOlderThanDays'));
+
+
+        $viewParams = [
+            'status' => "OK"
+        ];
+
+        return $this->renderView($request, $response, 'index.twig', $viewParams);
     }
 
-    private function saveToFile(string $filename, string $data)
+    /**
+     * Save a string to a file
+     *
+     * @param string $filename
+     * @param string $data
+     *
+     * @return bool|int
+     */
+    private function saveStringToFile(string $filename, string $data)
     {
         return file_put_contents(
             $filename . self::FILE_EXTENSION,
@@ -36,120 +71,109 @@ class DumpRequestController extends Controller
         );
     }
 
-    public function getRequestMethod()
-    {
-        return $_SERVER['REQUEST_METHOD'];
-    }
-
-    public function isGetRequest()
-    {
-        return $this->getRequestMethod() == 'GET';
-    }
-
-    public function isPostRequest()
-    {
-        return $this->getRequestMethod() == 'POST';
-    }
-
-    public function getRequestBody()
-    {
-        if (!$this->requestBody) {
-            $this->requestBody = file_get_contents('php://input');
-        }
-        return $this->requestBody;
-    }
-
-    public function parseRequestBody()
-    {
-        parse_str(file_get_contents("php://input"), $vars);
-        return $vars;
-    }
-
-    private function getMethodParamsAsString()
+    /**
+     * get dump of method params as a string
+     *
+     * @param Request $request
+     *
+     * @return string
+     */
+    private function getMethodParamsAsString(Request $request)
     {
         $data = '';
-        if (!$this->isGetRequest()) {
-            $vars = $this->isPostRequest() ? $_POST : $this->parseRequestBody();
-            $data .= PHP_EOL . PHP_EOL . $this->getRequestMethod() . ' vars:' . PHP_EOL;
-            foreach ($vars as $key => $value) {
-                if (is_array($value)) {
-                    $value = '["' . implode('","', $value) . '"]';
-                }
-                $data .= "$key: $value" . PHP_EOL;
+        $vars = $request->getParams();
+        $data .= PHP_EOL . PHP_EOL . $request->getMethod() . ' vars:' . PHP_EOL;
+        foreach ($vars as $key => $value) {
+            if (is_array($value)) {
+                $value = '["' . implode('","', $value) . '"]';
             }
+            $data .= "$key: $value" . PHP_EOL;
         }
         return $data;
-    }
-
-    private function getUploadedFilesAsSummaryString(string $filename)
-    {
-        $data = '';
-        if ($_FILES) {
-            $data .= PHP_EOL . PHP_EOL . 'Files Uploaded:' . PHP_EOL;
-            foreach ($_FILES as $fileField => $meta) {
-                $data .= 'File Field Name: ' . $fileField . PHP_EOL;
-                foreach ($meta as $key => $value) {
-                    $data .= "- $key: " . $value . PHP_EOL;
-                }
-                if (is_uploaded_file($_FILES[$fileField]['tmp_name'])) {
-                    $sanitisedFilename = preg_replace('/[^-_0-9a-zA-Z]+/', '', $fileField);
-                    $uploadFilename = $filename . '-' . $sanitisedFilename . self::UPLOAD_EXTENSION;
-                    if (move_uploaded_file($_FILES[$fileField]['tmp_name'], $uploadFilename)) {
-                        $data .= "- saved to: " . basename($uploadFilename) . PHP_EOL;
-                    }
-                }
-            }
-        }
-        return $data;
-    }
-
-    private function getHeadersAsString(): string
-    {
-        $data = '';
-        $data .= sprintf(
-            "%s %s %s\n\nHTTP headers:\n",
-            $_SERVER['REQUEST_METHOD'],
-            $_SERVER['REQUEST_URI'],
-            $_SERVER['SERVER_PROTOCOL']
-        );
-
-        foreach ($this->getHeaderList() as $name => $value) {
-            $data .= $name . ': ' . $value . PHP_EOL;
-        }
-        return $data;
-    }
-
-    private function getRequestBodyAsString()
-    {
-        $data = PHP_EOL . "Request body:" . PHP_EOL;
-        $data .= $this->getRequestBody() . PHP_EOL;
-        return $data;
-    }
-
-    private function getHeaderList()
-    {
-        $headerList = [];
-        foreach ($_SERVER as $name => $value) {
-            if (preg_match('/^HTTP_/', $name)) {
-                // convert HTTP_HEADER_NAME to Header-Name
-                $name = strtr(substr($name, 5), '_', ' ');
-                $name = ucwords(strtolower($name));
-                $name = strtr($name, ' ', '-');
-                // add to list
-                $headerList[$name] = $value;
-            }
-        }
-        return $headerList;
     }
 
     /**
+     * Get a summary of uploaded files and also save them off to disk cache
+     *
+     * @param Request $request
+     * @param string  $filename
+     *
+     * @return string
+     */
+    private function getUploadedFilesAsSummaryString(Request $request, string $filename)
+    {
+        $data = '';
+        /**
+         * @var UploadedFileInterface[] $files
+         */
+        $files = $request->getUploadedFiles();
+        if ($files) {
+            $data .= PHP_EOL . PHP_EOL . 'Files Uploaded:' . PHP_EOL;
+            foreach ($files as $fileMeta) {
+                $data .= 'Filename: ' . $fileMeta->getClientFilename() . PHP_EOL;
+                $data .= "- MediaType: " . $fileMeta->getClientMediaType() . PHP_EOL;
+                $data .= "- Size: " . $fileMeta->getSize() . PHP_EOL;
+                if ($fileMeta->getError() === UPLOAD_ERR_OK) {
+                    $sanitisedFilename = preg_replace('/[^-_0-9a-zA-Z\.]+/', '', $fileMeta->getClientFilename());
+                    $uploadFilename    = $filename . '-' . $sanitisedFilename . self::UPLOAD_EXTENSION;
+                    $fileMeta->moveTo($uploadFilename);
+                    $data .= "- saved to: " . basename($uploadFilename) . PHP_EOL;
+                } else {
+                    $data .= "- Upload Error: " . $fileMeta->getError() . PHP_EOL;
+                }
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Capture headers to string
+     *
+     * @param Request $request
+     *
+     * @return string
+     */
+    private function getHeadersAsString(Request $request): string
+    {
+        $data    = '';
+        $data    .= sprintf(
+            "%s %s %s" . PHP_EOL . PHP_EOL . "HTTP headers:" . PHP_EOL,
+            $request->getMethod(),
+            $request->getUri(),
+            $request->getProtocolVersion()
+        );
+        $headers = $request->getHeaders();
+        foreach ($headers as $name => $value) {
+            $data .= $name . ': ' . implode(', ', $value) . PHP_EOL;
+        }
+        return $data;
+    }
+
+    /**
+     * Capture request body to a string
+     *
+     * @param Request $request
+     *
+     * @return string
+     */
+    private function getRequestBodyAsString(Request $request)
+    {
+        $data = PHP_EOL . "Request body:" . PHP_EOL;
+        $data .= $request->getBody() . PHP_EOL;
+        return $data;
+    }
+
+
+    /**
+     * clean up old cache files so the disk doesnt fill up
+     *
      * @param string $dir
-     * @param int $seconds default 7 days in seconds
+     * @param int    $seconds default 7 days in seconds
      */
     private function removeFilesOlderThanXseconds(string $dir, $seconds = 604800)
     {
         $files = glob($dir . "/*");
-        $now = time();
+        $now   = time();
 
         foreach ($files as $file) {
             if (is_file($file)) {

@@ -2,7 +2,7 @@
   "name": "davebarnwell/dumprequest",
   "description": "description_text",
   "minimum-stability": "stable",
-  "license": "proprietary",
+  "license": "MITc",
   "authors": [
     {
       "name": "Dave Barnwell",
@@ -14,6 +14,8 @@
   },
   "require": {
     "symfony/yaml": "3.2.x",
-    "slim/slim": "^3.0"
+    "slim/slim": "^3.0",
+    "monolog/monolog": "^1.22",
+    "slim/twig-view": "^2.2"
   }
 }

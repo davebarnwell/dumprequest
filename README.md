@@ -23,6 +23,8 @@ you just started
             --data-raw "pa1[]"="va2" \
             --data-raw "p1"="v1"
 
+You'll note the response from the request is a JSON structure as we set the Accept header to
+*application/json* if not supplied or set to *text/html* an HTML response is given, if set to *text/xml* an XML response is given
             
 Finally take a look in the cache directory at the *.txt files
 
