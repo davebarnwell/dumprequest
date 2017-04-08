@@ -20,8 +20,7 @@ web server on your machine on port 8080
         cd public
         php -S 127.0.0.1:8080
                 
-In another terminal window run the following which POSTs some test data to the the web server
-you just started
+In another terminal window run the following which sends a PUT request with some form params
 
         curl -X PUT "http://127.0.0.1:8080/" \
             -H "Content-Type: application/x-www-form-urlencoded; charset=utf-8" \
