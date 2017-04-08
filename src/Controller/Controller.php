@@ -17,6 +17,16 @@ class Controller
         $this->container = $container;
     }
 
+    /**
+     * render content based on the Accept content header e.g. html, json, xml
+     *
+     * @param Request  $request
+     * @param Response $response
+     * @param string   $template
+     * @param array    $viewParams
+     *
+     * @return ResponseInterface
+     */
     protected function renderView(
         Request $request,
         Response $response,
@@ -39,13 +49,22 @@ class Controller
         }
     }
 
+    /**
+     * render JSON response
+     *
+     * @param Response $response
+     * @param array    $viewParams
+     *
+     * @return ResponseInterface
+     */
+
     private function renderJSON(Response $response, array $viewParams): ResponseInterface
     {
         return $response->withJson($viewParams);
     }
 
     /**
-     * render XML respsonse
+     * render XML response
      *
      * @param Response $response
      * @param array    $viewParams
