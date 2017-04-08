@@ -6,7 +6,7 @@
  * Time: 19:58
  */
 
-namespace davebarnwell\Model;
+namespace httpdump\Model;
 
 
 use Throwable;

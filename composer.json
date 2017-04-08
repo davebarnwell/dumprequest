@@ -10,7 +10,7 @@
     }
   ],
   "autoload": {
-    "psr-4": {"davebarnwell\\": "src/"}
+    "psr-4": {"httpdump\\": "src/"}
   },
   "require": {
     "symfony/yaml": "3.2.x",

@@ -6,7 +6,7 @@
  * Time: 19:46
  */
 
-namespace davebarnwell\Model;
+namespace httpdump\Model;
 
 
 use Symfony\Component\Yaml\Yaml;

@@ -1,6 +1,6 @@
 <?php
 
-namespace davebarnwell\Controller;
+namespace httpdump\Controller;
 
 use Interop\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;

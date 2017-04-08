@@ -21,7 +21,7 @@ $container['logger'] = function (\Psr\Container\ContainerInterface $c) {
 
 // Register settings
 $container['settings_yml'] = function (\Psr\Container\ContainerInterface $c) {
-    return new \davebarnwell\Model\SettingsModel();
+    return new \httpdump\Model\SettingsModel();
 };
 
 // Register Twig View helper
@@ -41,8 +41,8 @@ $container['view'] = function (\Psr\Container\ContainerInterface $c) {
 };
 
 // Routes
-$app->any('/', \davebarnwell\Controller\DumpRequestController::class . ':execute');
-$app->any('/{parts:.+}', \davebarnwell\Controller\DumpRequestController::class . ':execute');
+$app->any('/', \httpdump\Controller\DumpRequestController::class . ':execute');
+$app->any('/{parts:.+}', \httpdump\Controller\DumpRequestController::class . ':execute');
 
 // Start App
 $app->run();

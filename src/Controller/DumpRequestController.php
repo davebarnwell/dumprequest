@@ -1,6 +1,6 @@
 <?php
 
-namespace davebarnwell\Controller;
+namespace httpdump\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;

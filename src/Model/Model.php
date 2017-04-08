@@ -1,6 +1,6 @@
 <?php
 
-namespace davebarnwell\Model;
+namespace httpdump\Model;
 
 class Model
 {
