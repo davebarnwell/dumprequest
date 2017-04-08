@@ -13,6 +13,7 @@
     "psr-4": {"davebarnwell\\": "src/"}
   },
   "require": {
-    "symfony/yaml": "3.2.x"
+    "symfony/yaml": "3.2.x",
+    "slim/slim": "^3.0"
   }
 }

@@ -1,0 +1,5 @@
+# Make sure your Apache virtual host is configured with the AllowOverride All option so that the .htaccess rewrite rules can be used:
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
